@@ -9,7 +9,7 @@ jobs:
        - checkout
        - aws-cli/setup
        - serverless/setup
-       - run: sls deploy 
+       - run: cd backend && sls deploy 
 workflows:
   one_and_two:
     jobs:
