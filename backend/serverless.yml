@@ -1,5 +1,5 @@
 service:
-  name: serverless-todo-app
+  name: booklist-application
 
 plugins:
   - serverless-webpack
@@ -26,36 +26,36 @@ provider:
   region: ${opt:region, 'us-east-1'}
 
   environment:
-    TODOS_TABLE: Todos-miller-${self:provider.stage}
+    BOOKLIST_TABLE: Booklist-mucyo-app-${self:provider.stage}
     USER_ID_INDEX: UserIdIndex
     SIGNED_URL_EXPIRATION: 300 #5min
-    S3_BUCKET: serverless-todo-mucyofred-${self:provider.stage}
+    S3_BUCKET: serverless-booklist-application-${self:provider.stage}
 
 custom:
   documentation:
     api:
       info:
         version: v1.0.0
-        title: Mucyo Todo serverless API
-        description: Serverless API for managing your Todos
+        title: Booklist Serverless API
+        description: Serverless API for managing your Book reading list
     models:
-      - name: CreateTodoRequest
+      - name: CreateBookRequest
         contentType: application/json
-        schema: ${file(models/create-todo-request.json)}
-      - name: UpdateTodoRequest
+        schema: ${file(models/create-book-request.json)}
+      - name: UpdateBookRequest
         contentType: application/json
-        schema: ${file(models/update-todo-request.json)}
+        schema: ${file(models/update-book-request.json)}
 
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
-  GetTodos:
-    handler: src/lambda/http/getTodos.handler
+  GetBooks:
+    handler: src/lambda/http/getBooks.handler
     events:
       - http:
           method: get
-          path: todos
+          path: books
           cors: true
           authorizer: Auth
           reqValidatorName: RequestBodyValidator
@@ -66,26 +66,26 @@ functions:
           - dynamodb:Scan
           - dynamodb:GetItem
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKLIST_TABLE}
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKLIST_TABLE}/index/${self:provider.environment.USER_ID_INDEX}
 
-  CreateTodo:
-    handler: src/lambda/http/createTodo.handler
+  CreateBook:
+    handler: src/lambda/http/createBook.handler
     events:
       - http:
           method: post
-          path: todos
+          path: books
           cors: true
           authorizer: Auth
           reqValidatorName: RequestBodyValidator
           documentation:
-            summary: create a new Todo
-            description: create a new Todo
+            summary: create a new Book
+            description: create a new Book
             requestModels:
-              'application/json': CreateTodoRequest
+              'application/json': CreateBookRequest
 
     iamRoleStatementsInherit: true
     iamRoleStatements:
@@ -93,22 +93,22 @@ functions:
         Action:
           - dynamodb:PutItem
           - dynamodb:GetItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKLIST_TABLE}
 
-  UpdateTodo:
-    handler: src/lambda/http/updateTodo.handler
+  UpdateBook:
+    handler: src/lambda/http/updateBook.handler
     events:
       - http:
           method: patch
-          path: todos/{todoId}
+          path: books/{bookId}
           cors: true
           authorizer: Auth
           reqValidatorName: RequestBodyValidator
           documentation:
-            summary: update a existing Todo
-            description: update a existing Todo
+            summary: Update an existing Book on List
+            description: Update an existing Book on the List
             requestModels:
-              'application/json': UpdateTodoRequest
+              'application/json': UpdateBookRequest
 
     iamRoleStatementsInherit: true
     iamRoleStatements:
@@ -116,14 +116,14 @@ functions:
         Action:
           - dynamodb:PutItem
           - dynamodb:GetItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKLIST_TABLE}
 
-  DeleteTodo:
-    handler: src/lambda/http/deleteTodo.handler
+  DeleteBook:
+    handler: src/lambda/http/deleteBook.handler
     events:
       - http:
           method: delete
-          path: todos/{todoId}
+          path: books/{bookId}
           cors: true
           authorizer: Auth
           reqValidatorName: RequestBodyValidator
@@ -133,14 +133,14 @@ functions:
         Action:
           - dynamodb:DeleteItem
           - dynamodb:GetItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKLIST_TABLE}
 
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
       - http:
           method: post
-          path: todos/{todoId}/attachment
+          path: books/{bookId}/attachment
           cors: true
           authorizer: Auth
     iamRoleStatementsInherit: true
@@ -148,11 +148,11 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKLIST_TABLE}
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.BOOKLIST_TABLE}
       - Effect: Allow
         Action:
           - s3:PutObject
@@ -181,30 +181,30 @@ resources:
         ValidateRequestBody: true
         ValidateRequestParameters: false
 
-    TodosDynamoDBTable:
+    BooksDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          - AttributeName: todoId
+          - AttributeName: bookId
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
-          - AttributeName: todoId
+          - AttributeName: bookId
             KeyType: RANGE
         GlobalSecondaryIndexes:
           - IndexName: ${self:provider.environment.USER_ID_INDEX}
             KeySchema:
               - AttributeName: userId
                 KeyType: HASH
-              - AttributeName: todoId
+              - AttributeName: bookId
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:provider.environment.TODOS_TABLE}
+        TableName: ${self:provider.environment.BOOKLIST_TABLE}
 
     ImagesBucket:
       Type: AWS::S3::Bucket

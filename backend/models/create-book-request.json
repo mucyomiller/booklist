@@ -1,18 +1,25 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "create-todo",
+    "title": "create-book",
     "type": "object",
     "properties": {
-        "name": {
+        "title": {
             "type": "string"
         },
-        "dueDate": {
+        "category": {
+            "type": "string"
+        },
+        "authors": {
+            "type": "string"
+        },
+        "isbn": {
             "type": "string"
         }
     },
     "required": [
-        "name",
-        "dueDate"
+        "title",
+        "authors",
+        "isbn"
     ],
     "additionalProperties": false
 }

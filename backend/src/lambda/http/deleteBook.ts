@@ -1,29 +1,29 @@
 import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
-import { isTodoExist, deleteTodo } from '../../businessLogic/todos'
+import { isBookExist, deleteBook } from '../../businessLogic/books'
 import { getUserId } from '../utils'
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log(`event -> ${JSON.stringify(event, null, 2)}`)
-  const todoId: string = event.pathParameters.todoId
+  const bookId: string = event.pathParameters.bookId
   const userId: string = getUserId(event);
 
-  console.log(`todoId -> ${todoId}`)
+  console.log(`bookId -> ${bookId}`)
 
-  const isValidTodo = await isTodoExist(todoId, userId)
-  if (!isValidTodo) {
+  const isValidBook = await isBookExist(bookId, userId)
+  if (!isValidBook) {
     return {
       statusCode: 404,
       headers: {
         'Access-Control-Allow-Origin': "*"
       },
       body: JSON.stringify({
-        error: 'This Todo does\'nt exist!'
+        error: 'This Book does\'nt exist!'
       })
     }
   }
 
-  const deleted: Boolean = await deleteTodo(todoId, userId);
+  const deleted: Boolean = await deleteBook(bookId, userId);
   if (!deleted) {
     return {
       statusCode: 200,
@@ -31,7 +31,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
         'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({
-        message: 'Oops Unexpected error happened while trying  to remove Todo'
+        message: 'Oops Unexpected error happened while trying  to remove the Book'
       })
     }
   }
@@ -41,7 +41,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
       'Access-Control-Allow-Origin': '*'
     },
     body: JSON.stringify({
-      message: 'Successfully removed Todo'
+      message: 'Successfully removed specified Book'
     })
   }
 }

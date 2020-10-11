@@ -1,33 +1,33 @@
 import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
-import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
+import { UpdateBookRequest } from '../../requests/UpdateBookRequest'
 import { getUserId } from '../utils'
-import { isTodoExist, updateTodo } from '../../businessLogic/todos'
-import { TodoItem } from '../../models/TodoItem'
+import { isBookExist, updateBook } from '../../businessLogic/books'
+import { Book } from '../../models/Book'
 import { createLogger } from '../../utils/logger'
 
-const logger = createLogger('updateTodo');
+const logger = createLogger('updateBook');
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   logger.info(`event -> ${JSON.stringify(event, null, 2)}`)
-  const todoId: string = event.pathParameters.todoId
+  const bookId: string = event.pathParameters.bookId
   const userId: string = getUserId(event);
-  logger.info(`todoId -> ${todoId}`);
-  const updatedTodo: UpdateTodoRequest = JSON.parse(event.body)
+  logger.info(`bookId -> ${bookId}`);
+  const updatedBook: UpdateBookRequest = JSON.parse(event.body)
 
-  const isTodoAvailable = await isTodoExist(todoId, userId);
-  logger.info(`is Todo available -> ${isTodoAvailable}`);
-  if (!isTodoAvailable) {
+  const isBookAvailable = await isBookExist(bookId, userId);
+  logger.info(`is Book available -> ${isBookAvailable}`);
+  if (!isBookAvailable) {
     return {
       statusCode: 404,
       headers: {
         'Access-Control-Allow-Origin': "*"
       },
       body: JSON.stringify({
-        error: 'This Todo You\'re trying to update  does\'nt exist!'
+        error: 'This Book You\'re trying to update  does\'nt exist!'
       })
     }
   }
-  const updatedItem: TodoItem = await updateTodo(updatedTodo, todoId, userId);
+  const updatedItem: Book = await updateBook(updatedBook, bookId, userId);
   return {
     statusCode: 201,
     headers: {

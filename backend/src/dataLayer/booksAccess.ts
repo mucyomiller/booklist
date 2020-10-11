@@ -1,26 +1,26 @@
-import { TodoItem } from "../models/TodoItem";
-import { CreateTodoRequest } from "../requests/CreateTodoRequest";
-import { UpdateTodoRequest } from "../requests/UpdateTodoRequest";
+import { Book } from "../models/Book";
+import { CreateBookRequest } from "../requests/CreateBookRequest";
+import { UpdateBookRequest } from "../requests/UpdateBookRequest";
 import * as uuid from 'uuid'
 import * as AWS from 'aws-sdk'
-import * as AWSXRay from 'aws-xray-sdk'
 import { createLogger } from "../utils/logger";
 
+const AWSXRay = require('aws-xray-sdk');
 
 const XAWS = AWSXRay.captureAWS(AWS)
-const logger = createLogger('TodosAccess');
+const logger = createLogger('BooksAccess');
 
-export class TodosAccess {
+export class BooksAccess {
     constructor(
         private readonly docClient: AWS.DynamoDB.DocumentClient = new XAWS.DynamoDB.DocumentClient(),
         private readonly s3: AWS.S3 = new AWS.S3({ signatureVersion: 'v4' }),
-        private readonly todosTable = process.env.TODOS_TABLE,
+        private readonly booksTable = process.env.BOOKLIST_TABLE,
         private readonly userIdIndex = process.env.USER_ID_INDEX
     ) { }
 
-    async getUserTodos(userId: string): Promise<TodoItem[]> {
+    async getUserBooks(userId: string): Promise<Book[]> {
         const result = await this.docClient.query({
-            TableName: this.todosTable,
+            TableName: this.booksTable,
             IndexName: this.userIdIndex,
             KeyConditionExpression: 'userId = :userId',
             ExpressionAttributeValues: {
@@ -28,44 +28,44 @@ export class TodosAccess {
             }
         }).promise()
 
-        return result.Items as TodoItem[]
+        return result.Items as Book[]
     }
 
-    async createTodo(request: CreateTodoRequest, userId: string): Promise<TodoItem> {
-        const todoId = uuid.v4()
-        const createdTodo = {
-            todoId,
+    async createBook(request: CreateBookRequest, userId: string): Promise<Book> {
+        const bookId = uuid.v4()
+        const createdBook = {
+            bookId,
             userId,
             ...request
         }
         await this.docClient.put({
-            TableName: this.todosTable,
-            Item: createdTodo
+            TableName: this.booksTable,
+            Item: createdBook
         }).promise()
 
-        return createdTodo as TodoItem;
+        return createdBook as unknown as Book;
     }
 
 
-    async getTodoById(id: string, userId: string): Promise<TodoItem> {
+    async getBookById(id: string, userId: string): Promise<Book> {
         const result = await this.docClient
             .get({
-                TableName: this.todosTable,
+                TableName: this.booksTable,
                 Key: {
-                    todoId: id,
+                    bookId: id,
                     userId: userId
                 }
             })
             .promise()
-        return result.Item as TodoItem
+        return result.Item as Book
     }
 
-    async isTodoExist(id: string, userId: string): Promise<Boolean> {
+    async isBookExist(id: string, userId: string): Promise<Boolean> {
         const result = await this.docClient
             .get({
-                TableName: this.todosTable,
+                TableName: this.booksTable,
                 Key: {
-                    todoId: id,
+                    bookId: id,
                     userId: userId
                 }
             })
@@ -75,46 +75,46 @@ export class TodosAccess {
         return response;
     }
 
-    async updateTodo(updatedTodo: UpdateTodoRequest, todoId: string, userId: string): Promise<TodoItem> {
+    async updateBook(updatedBook: UpdateBookRequest, bookId: string, userId: string): Promise<Book> {
 
-        const oldOne = await this.getTodoById(todoId, userId);
+        const oldOne = await this.getBookById(bookId, userId);
 
         const updatedItem = {
-            todoId,
+            bookId,
             userId,
             createdAt: oldOne.createdAt,
             attachmentUrl: oldOne.attachmentUrl,
-            ...updatedTodo
+            ...updatedBook
         }
 
         await this.docClient.put({
-            TableName: this.todosTable,
+            TableName: this.booksTable,
             Item: updatedItem
         }).promise()
 
-        return updatedItem as TodoItem
+        return updatedItem as Book
     }
 
-    async deleteTodoById(todoId: string, userId: string): Promise<Boolean> {
+    async deleteBookById(bookId: string, userId: string): Promise<Boolean> {
         const params = {
-            TableName: this.todosTable,
+            TableName: this.booksTable,
             userId: userId,
             Key: {
-                todoId: todoId,
+                bookId: bookId,
                 userId: userId
             }
         }
 
         let err: AWS.AWSError, data: AWS.DynamoDB.DocumentClient.DeleteItemOutput = await this.docClient.delete(params).promise();
         if (err) {
-            console.error(` we were unable to delete this Todo ${JSON.stringify(err, null, 2)}`);
+            console.error(` we were unable to delete this Book ${JSON.stringify(err, null, 2)}`);
             return false;
         }
-        console.log(`Todo was deleted successfully ${JSON.stringify(data, null, 2)}`);
+        console.log(`Book was deleted successfully ${JSON.stringify(data, null, 2)}`);
         return true;
     }
 
-    async getSignedURL(todoId: string, userId: string): Promise<string> {
+    async getSignedURL(bookId: string, userId: string): Promise<string> {
 
         const BUCKET = process.env.S3_BUCKET
         const URL_EXP = process.env.SIGNED_URL_EXPIRATION
@@ -128,10 +128,10 @@ export class TodosAccess {
 
         const imageUrl = `https://${BUCKET}.s3.amazonaws.com/${imageId}`
 
-        // update existing image URL on current TODO
+        // update existing image URL on current Book
         const updateImageUrl = {
-            TableName: this.todosTable,
-            Key: { "todoId": todoId, "userId": userId },
+            TableName: this.booksTable,
+            Key: { "bookId": bookId, "userId": userId },
             UpdateExpression: "set attachmentUrl = :a",
             ExpressionAttributeValues: {
                 ":a": imageUrl

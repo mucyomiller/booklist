@@ -3,19 +3,19 @@ import { Link, Route, Router, Switch } from 'react-router-dom'
 import { Grid, Menu, Segment } from 'semantic-ui-react'
 
 import Auth from './auth/Auth'
-import { EditTodo } from './components/EditTodo'
+import { EditBook } from './components/EditBook'
 import { LogIn } from './components/LogIn'
 import { NotFound } from './components/NotFound'
-import { Todos } from './components/Todos'
+import { Books } from './components/Books'
 
-export interface AppProps {}
+export interface AppProps { }
 
 export interface AppProps {
   auth: Auth
   history: any
 }
 
-export interface AppState {}
+export interface AppState { }
 
 export default class App extends Component<AppProps, AppState> {
   constructor(props: AppProps) {
@@ -92,15 +92,15 @@ export default class App extends Component<AppProps, AppState> {
           path="/"
           exact
           render={props => {
-            return <Todos {...props} auth={this.props.auth} />
+            return <Books {...props} auth={this.props.auth} />
           }}
         />
 
         <Route
-          path="/todos/:todoId/edit"
+          path="/books/:bookId/edit"
           exact
           render={props => {
-            return <EditTodo {...props} auth={this.props.auth} />
+            return <EditBook {...props} auth={this.props.auth} />
           }}
         />
 

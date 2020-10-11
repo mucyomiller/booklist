@@ -1,12 +1,12 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "update-todo",
+    "title": "update-book",
     "type": "object",
     "properties": {
-        "name": {
+        "title": {
             "type": "string"
         },
-        "dueDate": {
+        "authors": {
             "type": "string"
         },
         "done": {
@@ -14,8 +14,8 @@
         }
     },
     "required": [
-        "name",
-        "dueDate",
+        "title",
+        "authors",
         "done"
     ],
     "additionalProperties": false
