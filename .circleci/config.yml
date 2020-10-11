@@ -5,11 +5,13 @@ orbs:
 jobs:
    one:
      executor: serverless/default
+     - working_directory: ~/repo/backend
      steps:
-       - checkout
+       - checkout:
+           path: ~/repo
        - aws-cli/setup
        - serverless/setup
-       - run: cd backend && sls deploy 
+       - run: sls deploy 
 workflows:
   one_and_two:
     jobs:
